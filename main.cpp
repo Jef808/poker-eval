@@ -5,14 +5,16 @@
 #include <string>
 
 #include "tables.h"
+#include "bitset_rankindex.h"
+#include "keys.h"
 
 // bit scheme for a card
 /**
  * xxxbbbbb | bbbbbbbb | cdhsrrrr | xxpppppp
  *
  * where:
- *   p = prime number of rank (deuce=2, trey=3, four=5, ... , king=13, ace=41)
- *   r = rank of card (deuce=2, trey=3, four=4, ... , king=13, ace=14)
+ *   p = prime number of rank (deuce=2, trey=3, four=5, ... , king=37, ace=41)
+ *   r = rank of card (deuce=0, trey=1, four=2, ... , king=11, ace=12)
  *   cdhs = suit of card (bit turned on based on suit)
  *   b = bit turned on depending on rank of card
  */
@@ -28,49 +30,20 @@ static const int prime_for_rank[15] = {
   0, 0, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41
 };
 
-inline uint32_t card_from_rank_suit(int rank, int suit) {
-  return (prime_for_rank[rank] | ((rank - 2) << 8) | (1 << (16 + rank - 2)) |
-          (suit << 12));
-}
-
-void print_bits(uint32_t value) {
-  std::bitset<32> bits(value);
-  std::string bit_str = bits.to_string();
-
-  for (auto i = 0; i < 4; ++i) {
-    std::cout << bit_str.substr(i * 8, 8);
-    if (i < 3) std::cout << " ";
-  }
-
-  std::cout << " (0x" << std::hex << value << std::dec << ")" << std::endl;
-}
-
-struct Deck {
-  std::array<uint32_t, 15> spades;
-  std::array<uint32_t, 15> hearts;
-  std::array<uint32_t, 15> diamonds;
-  std::array<uint32_t, 15> clubs;
-};
-
-Deck initialize_deck() {
-  Deck Cards{};
-  for (int rank = 2; rank <= 14; ++rank) {
-    Cards.spades[rank] = card_from_rank_suit(rank, SPADES);
-    Cards.hearts[rank] = card_from_rank_suit(rank, HEARTS);
-    Cards.diamonds[rank] = card_from_rank_suit(rank, DIAMONDS);
-    Cards.clubs[rank] = card_from_rank_suit(rank, CLUBS);
-  }
-  return Cards;
+inline int q(const std::array<uint32_t, 5>& hand) {
+  return (hand[0] | hand[1] | hand[2] | hand[3] | hand[4]) >> 16;
 }
 
 inline bool is_flush(const std::array<uint32_t, 5>& hand) {
   return hand[0] & hand[1] & hand[2] & hand[3] & hand[4] & 0xf000;
 }
 
-inline int q(const std::array<uint32_t, 5>& hand) {
-  return (hand[0] | hand[1] | hand[2] | hand[3] | hand[4]) >> 16;
+inline uint32_t card_from_rank_suit(int rank, int suit) {
+  return (prime_for_rank[rank] | ((rank - 2) << 8) | (1 << (16 + rank - 2)) |
+          (suit << 12));
 }
 
+// Highest q value of 5 distinct cards is 7936 (A-K-Q-J-10)
 std::array<uint16_t, 7937> gen_flush_tables() {
   std::array<uint32_t, 15> cards{0, 0};
   for (auto rank = 2; rank <= 14; ++rank) {
@@ -112,12 +85,62 @@ std::array<uint16_t, 7937> gen_flush_tables() {
   return flush_table;
 }
 
+uint16_t eval5(const std::array<uint32_t, 5>& hand, const BitsetRankIndex& hash) {
+  auto idx = q(hand);
+
+  // Check for flushes and straight flushes
+  if (is_flush(hand)) {
+    return flush_table[idx];
+  }
+
+  // Check for Straights and High card hands.
+  uint16_t s;
+  if ((s = unique5[idx])) {
+    return s;
+  }
+
+  // Perfect hash lookup for remaining hands
+  idx = (hand[0] & 0xff) * (hand[1] & 0xff) * (hand[2] & 0xff) * (hand[3] & 0xff) * (hand[4] & 0xff);
+  return values[hash.index(idx)];
+}
+
+void print_bits(uint32_t value) {
+  std::bitset<32> bits(value);
+  std::string bit_str = bits.to_string();
+
+  for (auto i = 0; i < 4; ++i) {
+    std::cout << bit_str.substr(i * 8, 8);
+    if (i < 3) std::cout << " ";
+  }
+
+  std::cout << " (0x" << std::hex << value << std::dec << ")" << std::endl;
+}
+
+struct Deck {
+  std::array<uint32_t, 15> spades;
+  std::array<uint32_t, 15> hearts;
+  std::array<uint32_t, 15> diamonds;
+  std::array<uint32_t, 15> clubs;
+};
+
+Deck initialize_deck() {
+  Deck Cards{};
+  for (int rank = 2; rank <= 14; ++rank) {
+    Cards.spades[rank] = card_from_rank_suit(rank, SPADES);
+    Cards.hearts[rank] = card_from_rank_suit(rank, HEARTS);
+    Cards.diamonds[rank] = card_from_rank_suit(rank, DIAMONDS);
+    Cards.clubs[rank] = card_from_rank_suit(rank, CLUBS);
+  }
+  return Cards;
+}
+
 auto main() -> int {
   using Card = uint32_t;
   using Hand = std::array<Card, 5>;
 
   Deck deck = initialize_deck();
 
+  Card two_hearts = card_from_rank_suit(2, HEARTS);
   Card king_diamonds = card_from_rank_suit(13, DIAMONDS);
   Card five_spades = deck.spades[5];
   Card jack_clubs = card_from_rank_suit(11, CLUBS);
@@ -167,6 +190,9 @@ auto main() -> int {
   auto high_q_value = q(high_flush_hand);
   auto second_high_q_value = q(second_high_flush_hand);
 
+  std::cout << "Two of Hearts:    ";
+  print_bits(two_hearts);
+
   std::cout << "King of Diamonds: ";
   print_bits(king_diamonds);
 
@@ -206,6 +232,44 @@ auto main() -> int {
     std::cout << "Generated flush table does not match expected flush table." << std::endl;
     return 1;
   }
+
+  std::cout << "Initializing succinct bitset rank vector..." << std::endl;
+
+  auto hash = BitsetRankIndex(115856201, KEYS);
+
+  std::cout << "Done" << std::endl;
+
+  std::cout << "# of keys: " << hash.size() << std::endl;
+
+  std::cout << "hash.contains(18240449): " << (hash.contains(18240449) ? "true" : "false") << std::endl;
+  std::cout << "hash.contains(18240450): " << (hash.contains(18240450) ? "true" : "false") << std::endl;
+  std::cout << "hash.index(24783229): " << hash.index(24783229) << std::endl;
+
+
+  auto high_flush_hand_eval = eval5(high_flush_hand, hash);
+  std::cout << "High flush hand eval: " << high_flush_hand_eval << std::endl;
+
+  Hand king_high_straight = {
+    card_from_rank_suit(13, HEARTS),
+    card_from_rank_suit(12, HEARTS),
+    card_from_rank_suit(11, HEARTS),
+    card_from_rank_suit(10, HEARTS),
+    card_from_rank_suit(9, SPADES),
+  };
+
+  auto king_high_straight_eval = eval5(king_high_straight, hash);
+  std::cout << "king_high_straight_eval: " << king_high_straight_eval << std::endl;
+
+  Hand worst_hand = {
+    card_from_rank_suit(7, HEARTS),
+    card_from_rank_suit(5, HEARTS),
+    card_from_rank_suit(4, HEARTS),
+    card_from_rank_suit(3, HEARTS),
+    card_from_rank_suit(2, SPADES),
+  };
+
+  auto worst_hand_eval = eval5(worst_hand, hash);
+  std::cout << "worst_hand_eval: " << worst_hand_eval << std::endl;
 
   return 0;
 }
