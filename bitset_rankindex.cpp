@@ -28,7 +28,7 @@ bool BitsetRankIndex::contains(uint32_t k) const {
   return (bits_[w] >> b) & 1u;
 }
 
-uint32_t BitsetRankIndex::index(uint32_t k) const {
+uint32_t BitsetRankIndex::operator()(uint32_t k) const {
   size_t w = k >> 6;
   uint32_t b = k & 63;
   uint64_t mask = (b == 0) ? 0ull : ((uint64_t(1) << b) - 1);

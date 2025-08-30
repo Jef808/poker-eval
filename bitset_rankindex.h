@@ -10,7 +10,7 @@ class BitsetRankIndex {
 public:
   BitsetRankIndex(uint32_t max_value, const std::vector<uint32_t>& keys);
   bool contains(uint32_t k) const;
-  uint32_t index(uint32_t k) const;
+  uint32_t operator()(uint32_t k) const;
   uint32_t size() const;
 
 private:
