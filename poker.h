@@ -2,6 +2,8 @@
 #define POKER_H_
 
 #include <array>
+#include <algorithm>
+#include <cstdint>
 
 #include "tables.h"
 
@@ -62,6 +64,46 @@ uint16_t eval5(const HashFunc& hash, uint32_t c1, uint32_t c2, uint32_t c3, uint
   // Perfect hash lookup for remaining hands
   q = (c1 & 0xff) * (c2 & 0xff) * (c3 & 0xff) * (c4 & 0xff) * (c5 & 0xff);
   return VALUES[hash(q)];
+}
+
+template <typename HashFunc>
+uint16_t eval7(const HashFunc& hash, const std::array<uint32_t, 7>& hand) {
+  std::array<std::array<int, 5>, 21> combs {
+    std::array<int, 5>{0, 1, 2, 3, 4},
+    {0, 1, 2, 3, 5},
+    {0, 1, 2, 3, 6},
+    {0, 1, 2, 4, 5},
+    {0, 1, 2, 4, 6},
+    {0, 1, 2, 5, 6},
+    {0, 1, 3, 4, 5},
+    {0, 1, 3, 4, 6},
+    {0, 1, 3, 5, 6},
+    {0, 1, 4, 5, 6},
+    {0, 2, 3, 4, 5},
+    {0, 2, 3, 4, 6},
+    {0, 2, 3, 5, 6},
+    {0, 2, 4, 5, 6},
+    {0, 3, 4, 5, 6},
+    {1, 2, 3, 4, 5},
+    {1, 2, 3, 4, 6},
+    {1, 2, 3, 5, 6},
+    {1, 2, 4, 5, 6},
+    {1, 3, 4, 5, 6},
+    {2, 3, 4, 5, 6}
+  };
+
+  std::array<uint32_t, 5> hand5;
+  uint16_t best = 7462; // worst possible hand value: 7-5-4-3-2 offsuit
+  for (const auto& comb : combs) {
+    for (size_t i = 0; i < 5; ++i) {
+      hand5[i] = hand[comb[i]];
+    }
+    auto score = eval5(hash, hand5);
+    if (score < best) {
+      best = score;
+    }
+  }
+  return best;
 }
 
 #endif // POKER_H_

@@ -83,6 +83,7 @@ auto main() -> int {
   std::random_device rd;
   std::mt19937 g(rd());
 
+  // Benchmark eval5
   std::vector<uint32_t> cards{};
     cards.reserve(5000000);
 
@@ -108,8 +109,8 @@ auto main() -> int {
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-  std::cout << "Evaluated " << evals.size() << " hands in " << duration << " ms" << std::endl;
-  std::cout << "Average time per hand: " << static_cast<double>(duration) / 1000000.0 << " ms" << std::endl;
+  std::cout << "5Cards: Evaluated " << evals.size() << " hands in " << duration << " ms" << std::endl;
+  std::cout << "5Cards: Average time per hand: " << static_cast<double>(duration) / 1000000.0 << " ms" << std::endl;
 
   for (auto i = 0; i < 1000000; ++i) {
     if (i % 100000 == 0) {
@@ -117,6 +118,32 @@ auto main() -> int {
       std::cout << to_string(hand) << ": " << evals[i] << std::endl;
     }
   }
+
+
+  // Benchmark eval7
+  cards.clear();
+  evals.clear();
+  cards.reserve(7000000);
+
+  for (auto i = 0; i < 1000000; ++i) {
+    std::shuffle(deck.begin(), deck.end(), g);
+    for (auto j = 0; j < 7; ++j) {
+      cards.push_back(deck[j]);
+    }
+  }
+
+  start = std::chrono::high_resolution_clock::now();
+
+  for (auto i = 0; i < 1000000; ++i) {
+    auto eval = eval7(hash, std::array<uint32_t, 7>{cards[7 * i + 0], cards[7 * i + 1], cards[7 * i + 2], cards[7 * i + 3], cards[7 * i + 4], cards[7 * i + 5], cards[7 * i + 6]});
+    evals.push_back(eval);
+  }
+
+  end = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+  std::cout << "7Cards: Evaluated " << evals.size() << " hands in " << duration << " ms" << std::endl;
+  std::cout << "7Cards: Average time per hand: " << static_cast<double>(duration) / 1000000.0 << " ms" << std::endl;
 
   return 0;
 }
