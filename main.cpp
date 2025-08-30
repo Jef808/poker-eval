@@ -10,7 +10,6 @@
 
 #include "tables.h"
 #include "bitset_rankindex.h"
-#include "keys.h"
 
 // bit scheme for a card
 /**
@@ -106,7 +105,7 @@ uint16_t eval5(const HashFunc& hash, const std::array<uint32_t, 5>& hand) {
 
   // Perfect hash lookup for remaining hands
   idx = (hand[0] & 0xff) * (hand[1] & 0xff) * (hand[2] & 0xff) * (hand[3] & 0xff) * (hand[4] & 0xff);
-  return values[hash(idx)];
+  return VALUES[hash(idx)];
 }
 
 template <typename HashFunc>
@@ -125,7 +124,7 @@ uint16_t eval5(const HashFunc& hash, uint32_t c1, uint32_t c2, uint32_t c3, uint
 
   // Perfect hash lookup for remaining hands
   q = (c1 & 0xff) * (c2 & 0xff) * (c3 & 0xff) * (c4 & 0xff) * (c5 & 0xff);
-  return values[hash(q)];
+  return VALUES[hash(q)];
 }
 
 void print_bits(uint32_t value) {
@@ -400,7 +399,7 @@ auto main() -> int {
   std::cout << "contains: " << (hash.contains(idx) ? "true" : "false") << std::endl;
   std::cout << "hash:     " << hash(idx) << std::endl;
   std::cout << "Expected: " << "469" << std::endl;
-  std::cout << "hash value: " << values[hash(idx)] << std::endl;
+  std::cout << "hash value: " << VALUES[hash(idx)] << std::endl;
   std::cout << "Expected:   " << "2369" << std::endl;
 
   hand = {
