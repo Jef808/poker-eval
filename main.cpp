@@ -89,8 +89,9 @@ std::array<uint16_t, 7937> gen_flush_tables() {
   return flush_table;
 }
 
-uint16_t eval5(const std::array<uint32_t, 5>& hand, const BitsetRankIndex& hash) {
-  auto idx = q(hand);
+template <typename HashFunc>
+uint16_t eval5(const HashFunc& hash, const std::array<uint32_t, 5>& hand) {
+  int idx = q(hand);
 
   // Check for flushes and straight flushes
   if (is_flush(hand)) {
@@ -105,7 +106,26 @@ uint16_t eval5(const std::array<uint32_t, 5>& hand, const BitsetRankIndex& hash)
 
   // Perfect hash lookup for remaining hands
   idx = (hand[0] & 0xff) * (hand[1] & 0xff) * (hand[2] & 0xff) * (hand[3] & 0xff) * (hand[4] & 0xff);
-  return values[hash.index(idx)];
+  return values[hash(idx)];
+}
+
+template <typename HashFunc>
+uint16_t eval5(const HashFunc& hash, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5) {
+  int q = (c1 | c2 | c3 | c4 | c5) >> 16;
+
+  // Check for flushes and straight flushes
+  if (c1 & c2 & c3 & c4 & c5 & 0xf000) {
+    return flush_table[q];
+  }
+
+  // Check for Straights and High card hands.
+  if (uint16_t s = unique5[q]; s) {
+    return s;
+  }
+
+  // Perfect hash lookup for remaining hands
+  q = (c1 & 0xff) * (c2 & 0xff) * (c3 & 0xff) * (c4 & 0xff) * (c5 & 0xff);
+  return values[hash(q)];
 }
 
 void print_bits(uint32_t value) {
@@ -118,6 +138,30 @@ void print_bits(uint32_t value) {
   }
 
   std::cout << " (0x" << std::hex << value << std::dec << ")" << std::endl;
+}
+
+std::string to_string(uint32_t card) {
+  static const char* rank_strs[] = {
+    "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"
+  };
+  static const char* suit_strs[] = {"?", "s", "h", "?", "d", "?", "?", "?", "c"};
+
+  int rank = (card >> 8) & 0xf;
+  int suit = (card >> 12) & 0xf;
+
+  return std::string(rank_strs[rank]) + suit_strs[suit];
+}
+
+std::string to_string(const std::array<uint32_t, 5>& hand) {
+  auto hand_cpy = hand;
+  std::sort(hand_cpy.begin(), hand_cpy.end());
+
+  std::string result;
+  for (size_t i = 0; i < hand_cpy.size(); ++i) {
+    if (i > 0) result += " ";
+    result += to_string(hand_cpy[i]);
+  }
+  return result;
 }
 
 std::array<uint32_t, 52> initialize_deck() {
@@ -135,172 +179,273 @@ auto main() -> int {
   using Card = uint32_t;
   using Hand = std::array<Card, 5>;
 
-  auto deck = initialize_deck();
-  std::random_device rd;
-  std::mt19937 g(rd());
 
-  std::vector<Card> cards{};
-  cards.reserve(5000000);
+  // std::cout << "2h: " << to_string(card_from_rank_suit(2, HEARTS)) << std::endl;
+  // std::cout << "2s " << to_string(card_from_rank_suit(2, SPADES)) << std::endl;
+  // std::cout << "2d " << to_string(card_from_rank_suit(2, DIAMONDS)) << std::endl;
+  // std::cout << "2c " << to_string(card_from_rank_suit(2, CLUBS)) << std::endl;
 
-  for (auto i = 0; i < 1000000; ++i) {
-    std::shuffle(deck.begin(), deck.end(), g);
-    for (auto j = 0; j < 5; ++j) {
-      cards.push_back(deck[j]);
-    }
-  }
+  // std::cout << "Ah: " << to_string(card_from_rank_suit(14, HEARTS)) << std::endl;
+  // std::cout << "Kh: " << to_string(card_from_rank_suit(13, HEARTS)) << std::endl;
+  // std::cout << "Qh: " << to_string(card_from_rank_suit(12, HEARTS)) << std::endl;
+  // std::cout << "Jh: " << to_string(card_from_rank_suit(11, HEARTS)) << std::endl;
+  // std::cout << "Th: " << to_string(card_from_rank_suit(10, HEARTS)) << std::endl;
+  // std::cout << "9h: " << to_string(card_from_rank_suit(9, HEARTS)) << std::endl;
+  // std::cout << "8h: " << to_string(card_from_rank_suit(8, HEARTS)) << std::endl;
+  // std::cout << "7h: " << to_string(card_from_rank_suit(7, HEARTS)) << std::endl;
+  // std::cout << "6h: " << to_string(card_from_rank_suit(6, HEARTS)) << std::endl;
+  // std::cout << "5h: " << to_string(card_from_rank_suit(5, HEARTS)) << std::endl;
+  // std::cout << "4h: " << to_string(card_from_rank_suit(4, HEARTS)) << std::endl;
+  // std::cout << "3h: " << to_string(card_from_rank_suit(3, HEARTS)) << std::endl;
+  // std::cout << "2h: " << to_string(card_from_rank_suit(2, HEARTS)) << std::endl;
 
-  auto hash = BitsetRankIndex(115856201, KEYS);
-  std::vector<uint16_t> evals{};
-  evals.reserve(1000000);
+  // auto deck = initialize_deck();
+  // std::random_device rd;
+  // std::mt19937 g(rd());
 
-  auto start = std::chrono::high_resolution_clock::now();
+  // std::vector<uint16_t> cards{};
+  // cards.reserve(5000000);
 
-  for (auto i = 0; i < 1000000; ++i) {
-    Hand hand = {cards[i * 5 + 0], cards[i * 5 + 1], cards[i * 5 + 2], cards[i * 5 + 3], cards[i * 5 + 4]};
-    auto eval = eval5(hand, hash);
-    evals.push_back(eval);
-  }
-
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-
-  std::cout << "Evaluated " << evals.size() << " hands in " << duration << " ms" << std::endl;
-  std::cout << "Average time per hand: " << static_cast<double>(duration) / 1000000.0 << " ms" << std::endl;
-
-  for (size_t i = 0; i < 10; ++i) {
-    std::cout << "Hand " << i * 1000 + 1 << " evaluation: " << evals[i * 1000] << std::endl;
-  }
-}
-
-
-
-
-  // Card two_hearts = card_from_rank_suit(2, HEARTS);
-  // Card king_diamonds = card_from_rank_suit(13, DIAMONDS);
-  // Card jack_clubs = card_from_rank_suit(11, CLUBS);
-
-  // Hand low_flush_hand = {
-  //   card_from_rank_suit(6, HEARTS),
-  //   card_from_rank_suit(5, HEARTS),
-  //   card_from_rank_suit(4, HEARTS),
-  //   card_from_rank_suit(3, HEARTS),
-  //   card_from_rank_suit(2, HEARTS)
-  // };
-
-  // Hand second_low_flush_hand = {
-  //   card_from_rank_suit(6, DIAMONDS),
-  //   card_from_rank_suit(5, DIAMONDS),
-  //   card_from_rank_suit(4, DIAMONDS),
-  //   card_from_rank_suit(3, DIAMONDS),
-  //   card_from_rank_suit(2, DIAMONDS)
-  // };
-
-  // Hand high_flush_hand = {
-  //   card_from_rank_suit(14, CLUBS),
-  //   card_from_rank_suit(13, CLUBS),
-  //   card_from_rank_suit(12, CLUBS),
-  //   card_from_rank_suit(11, CLUBS),
-  //   card_from_rank_suit(10, CLUBS)
-  // };
-
-  // Hand second_high_flush_hand = {
-  //   card_from_rank_suit(14, HEARTS),
-  //   card_from_rank_suit(13, HEARTS),
-  //   card_from_rank_suit(12, HEARTS),
-  //   card_from_rank_suit(11, HEARTS),
-  //   card_from_rank_suit(9, HEARTS)
-  // };
-
-  // Hand non_flush_hand = {
-  //   card_from_rank_suit(14, HEARTS),
-  //   card_from_rank_suit(13, HEARTS),
-  //   card_from_rank_suit(12, HEARTS),
-  //   card_from_rank_suit(11, HEARTS),
-  //   card_from_rank_suit(9, DIAMONDS)
-  // };
-
-  // auto low_q_value = q(low_flush_hand);
-  // auto second_low_q_value = q(second_low_flush_hand);
-  // auto high_q_value = q(high_flush_hand);
-  // auto second_high_q_value = q(second_high_flush_hand);
-
-  // std::cout << "Two of Hearts:    ";
-  // print_bits(two_hearts);
-
-  // std::cout << "King of Diamonds: ";
-  // print_bits(king_diamonds);
-
-  // std::cout << "Jack of Clubs:    ";
-  // print_bits(jack_clubs);
-
-  // std::cout << "6 of Hearts:     ";
-  // print_bits(low_flush_hand[0]);
-  // std::cout << "5 of Hearts:     ";
-  // print_bits(low_flush_hand[1]);
-  // std::cout << "4 of Hearts:     ";
-  // print_bits(low_flush_hand[2]);
-  // std::cout << "3 of Hearts:     ";
-  // print_bits(low_flush_hand[3]);
-  // std::cout << "2 of Hearts:     ";
-  // print_bits(low_flush_hand[4]);
-
-  // std::cout << "Is low hand flush: " << (is_flush(low_flush_hand) ? "true" : "false") << std::endl;
-  // std::cout << "Is second low hand flush: " << (is_flush(second_low_flush_hand) ? "true" : "false") << std::endl;
-  // std::cout << "Is high hand flush: " << (is_flush(high_flush_hand) ? "true" : "false") << std::endl;
-  // std::cout << "Is second high hand flush: " << (is_flush(second_high_flush_hand) ? "true" : "false") << std::endl;
-  // std::cout << "Is non-flush hand flush: " << (is_flush(non_flush_hand) ? "true" : "false") << std::endl;
-
-  // std::cout << "Hand value of low flush hand: " << flush_table[low_q_value] << std::endl;
-
-  // std::cout << "Q value of low flush hand: " << low_q_value << std::endl;
-  // std::cout << "Q value of second low flush hand: " << second_low_q_value << std::endl;
-  // std::cout << "Q value of high flush hand: " << high_q_value << std::endl;
-  // std::cout << "Q value of second high flush hand: " << second_high_q_value << std::endl;
-
-  // auto my_flush_table = gen_flush_tables();
-
-  // if (my_flush_table != flush_table) {
-  //   std::cout << "Generated flush table does not match expected flush table." << std::endl;
-  //   return 1;
+  // for (auto i = 0; i < 1000000; ++i) {
+  //   std::shuffle(deck.begin(), deck.end(), g);
+  //   for (auto j = 0; j < 5; ++j) {
+  //     cards.push_back(deck[j]);
+  //   }
   // }
 
-  // std::cout << "Initializing succinct bitset rank vector..." << std::endl;
-
   // auto hash = BitsetRankIndex(115856201, KEYS);
+  // std::vector<uint16_t> evals{};
+  // evals.reserve(1000000);
 
-  // std::cout << "Done" << std::endl;
+  // auto start = std::chrono::high_resolution_clock::now();
 
-  // std::cout << "# of keys: " << hash.size() << std::endl;
+  // for (auto i = 0; i < 1000000; ++i) {
+  //   auto eval = eval5(hash, cards[5 * i + 0], cards[5 * i + 1], cards[5 * i + 2], cards[5 * i + 3], cards[5 * i + 4]);
+  //   evals.push_back(eval);
+  // }
 
-  // std::cout << "hash.contains(18240449): " << (hash.contains(18240449) ? "true" : "false") << std::endl;
-  // std::cout << "hash.contains(18240450): " << (hash.contains(18240450) ? "true" : "false") << std::endl;
-  // std::cout << "hash.index(24783229): " << hash.index(24783229) << std::endl;
+  // auto end = std::chrono::high_resolution_clock::now();
+  // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
+  // std::cout << "Evaluated " << evals.size() << " hands in " << duration << " ms" << std::endl;
+  // std::cout << "Average time per hand: " << static_cast<double>(duration) / 1000000.0 << " ms" << std::endl;
 
-  // auto high_flush_hand_eval = eval5(high_flush_hand, hash);
-  // std::cout << "High flush hand eval: " << high_flush_hand_eval << std::endl;
+  // for (auto i = 0; i < 1000000; ++i) {
+  //   if (i % 100000 == 0) {
+  //     std::array<uint32_t, 5> hand = {cards[5 * i + 0], cards[5 * i + 1], cards[5 * i + 2], cards[5 * i + 3], cards[5 * i + 4]};
+  //     std::cout << to_string(hand) << ": " << evals[i] << std::endl;
+  //   }
+  // }
+  Card two_hearts = card_from_rank_suit(2, HEARTS);
+  Card king_diamonds = card_from_rank_suit(13, DIAMONDS);
+  Card jack_clubs = card_from_rank_suit(11, CLUBS);
 
-  // Hand king_high_straight = {
-  //   card_from_rank_suit(13, HEARTS),
-  //   card_from_rank_suit(12, HEARTS),
-  //   card_from_rank_suit(11, HEARTS),
-  //   card_from_rank_suit(10, HEARTS),
-  //   card_from_rank_suit(9, SPADES),
-  // };
+  Hand low_flush_hand = {
+    card_from_rank_suit(6, HEARTS),
+    card_from_rank_suit(5, HEARTS),
+    card_from_rank_suit(4, HEARTS),
+    card_from_rank_suit(3, HEARTS),
+    card_from_rank_suit(2, HEARTS)
+  };
 
-  // auto king_high_straight_eval = eval5(king_high_straight, hash);
-  // std::cout << "king_high_straight_eval: " << king_high_straight_eval << std::endl;
+  Hand second_low_flush_hand = {
+    card_from_rank_suit(6, DIAMONDS),
+    card_from_rank_suit(5, DIAMONDS),
+    card_from_rank_suit(4, DIAMONDS),
+    card_from_rank_suit(3, DIAMONDS),
+    card_from_rank_suit(2, DIAMONDS)
+  };
 
-  // Hand worst_hand = {
-  //   card_from_rank_suit(7, HEARTS),
-  //   card_from_rank_suit(5, HEARTS),
-  //   card_from_rank_suit(4, HEARTS),
-  //   card_from_rank_suit(3, HEARTS),
-  //   card_from_rank_suit(2, SPADES),
-  // };
+  Hand high_flush_hand = {
+    card_from_rank_suit(14, CLUBS),
+    card_from_rank_suit(13, CLUBS),
+    card_from_rank_suit(12, CLUBS),
+    card_from_rank_suit(11, CLUBS),
+    card_from_rank_suit(10, CLUBS)
+  };
 
-  // auto worst_hand_eval = eval5(worst_hand, hash);
-  // std::cout << "worst_hand_eval: " << worst_hand_eval << std::endl;
+  Hand second_high_flush_hand = {
+    card_from_rank_suit(14, HEARTS),
+    card_from_rank_suit(13, HEARTS),
+    card_from_rank_suit(12, HEARTS),
+    card_from_rank_suit(11, HEARTS),
+    card_from_rank_suit(9, HEARTS)
+  };
 
-  // return 0;
-// }
+  Hand non_flush_hand = {
+    card_from_rank_suit(14, HEARTS),
+    card_from_rank_suit(13, HEARTS),
+    card_from_rank_suit(12, HEARTS),
+    card_from_rank_suit(11, HEARTS),
+    card_from_rank_suit(9, DIAMONDS)
+  };
+
+  auto low_q_value = q(low_flush_hand);
+  auto second_low_q_value = q(second_low_flush_hand);
+  auto high_q_value = q(high_flush_hand);
+  auto second_high_q_value = q(second_high_flush_hand);
+
+  std::cout << "Two of Hearts:    ";
+  print_bits(two_hearts);
+
+  std::cout << "King of Diamonds: ";
+  print_bits(king_diamonds);
+
+  std::cout << "Jack of Clubs:    ";
+  print_bits(jack_clubs);
+
+  std::cout << "6 of Hearts:     ";
+  print_bits(low_flush_hand[0]);
+  std::cout << "5 of Hearts:     ";
+  print_bits(low_flush_hand[1]);
+  std::cout << "4 of Hearts:     ";
+  print_bits(low_flush_hand[2]);
+  std::cout << "3 of Hearts:     ";
+  print_bits(low_flush_hand[3]);
+  std::cout << "2 of Hearts:     ";
+  print_bits(low_flush_hand[4]);
+
+  std::cout << "Is low hand flush: " << (is_flush(low_flush_hand) ? "true" : "false") << std::endl;
+  std::cout << "Is second low hand flush: " << (is_flush(second_low_flush_hand) ? "true" : "false") << std::endl;
+  std::cout << "Is high hand flush: " << (is_flush(high_flush_hand) ? "true" : "false") << std::endl;
+  std::cout << "Is second high hand flush: " << (is_flush(second_high_flush_hand) ? "true" : "false") << std::endl;
+  std::cout << "Is non-flush hand flush: " << (is_flush(non_flush_hand) ? "true" : "false") << std::endl;
+
+  std::cout << "Hand value of low flush hand: " << flush_table[low_q_value] << std::endl;
+
+  std::cout << "Q value of low flush hand: " << low_q_value << std::endl;
+  std::cout << "Q value of second low flush hand: " << second_low_q_value << std::endl;
+  std::cout << "Q value of high flush hand: " << high_q_value << std::endl;
+  std::cout << "Q value of second high flush hand: " << second_high_q_value << std::endl;
+
+  auto my_flush_table = gen_flush_tables();
+
+  if (my_flush_table != flush_table) {
+    std::cout << "Generated flush table does not match expected flush table." << std::endl;
+    return 1;
+  }
+
+  std::cout << "Initializing succinct bitset rank vector..." << std::endl;
+
+  auto hash = BitsetRankIndex(115856201, KEYS);
+
+  std::cout << "Done" << std::endl;
+
+  std::cout << "# of keys: " << hash.size() << std::endl;
+
+  std::cout << "hash.contains(18240449): " << (hash.contains(18240449) ? "true" : "false") << std::endl;
+  std::cout << "hash.contains(18240450): " << (hash.contains(18240450) ? "true" : "false") << std::endl;
+  std::cout << "hash.index(24783229): " << hash(24783229) << std::endl;
+
+  std::cout << "*** HASH ***" << std::endl;
+  uint32_t samples[] = {48, 72, 80, 108, 112, 120, 368, 378, 392, 396, 405, 408, 420};
+  std::cout << "Expect: 0, 1, 2, 3, 4, 5, 20, 21, 22, 23, 24, 25, 26," << std::endl;
+  std::cout << "Got:    ";
+  for (auto s : samples) {
+    std::cout << hash(s) << ", ";
+  }
+  std::cout << std::endl;
+
+  auto high_flush_hand_eval = eval5(hash, high_flush_hand);
+  std::cout << to_string(high_flush_hand) << ": " << high_flush_hand_eval << std::endl;
+
+  Hand king_high_straight = {
+    card_from_rank_suit(13, HEARTS),
+    card_from_rank_suit(12, HEARTS),
+    card_from_rank_suit(11, HEARTS),
+    card_from_rank_suit(10, HEARTS),
+    card_from_rank_suit(9, SPADES),
+  };
+
+  auto king_high_straight_eval = eval5(hash, king_high_straight);
+  std::cout << to_string(king_high_straight) << ": " << king_high_straight_eval << std::endl;
+
+  Hand worst_hand = {
+    card_from_rank_suit(7, HEARTS),
+    card_from_rank_suit(5, HEARTS),
+    card_from_rank_suit(4, HEARTS),
+    card_from_rank_suit(3, HEARTS),
+    card_from_rank_suit(2, SPADES),
+  };
+
+  auto worst_hand_eval = eval5(hash, worst_hand);
+  std::cout << to_string(worst_hand) << ": " << worst_hand_eval << std::endl;
+
+  Hand hand = {
+    card_from_rank_suit(14, HEARTS),
+    card_from_rank_suit(13, HEARTS),
+    card_from_rank_suit(11, CLUBS),
+    card_from_rank_suit(9, HEARTS),
+    card_from_rank_suit(7, SPADES),
+  };
+
+  std::cout << to_string(hand) << ": " << eval5(hash, hand) << std::endl;
+
+  hand = {
+    card_from_rank_suit(3, HEARTS),
+    card_from_rank_suit(3, SPADES),
+    card_from_rank_suit(3, CLUBS),
+    card_from_rank_suit(11, HEARTS),
+    card_from_rank_suit(7, SPADES),
+  };
+
+  std::cout << to_string(hand) << ": " << eval5(hash, hand) << std::endl;
+
+  int idx = q(hand);
+  uint16_t s = unique5[idx];
+  std::cout << "s: " << s << std::endl;
+
+  idx = (hand[0] & 0xff) * (hand[1] & 0xff) * (hand[2] & 0xff) * (hand[3] & 0xff) * (hand[4] & 0xff);
+  std::cout << "prime idx: " << idx << std::endl;
+  std::cout << "contains: " << (hash.contains(idx) ? "true" : "false") << std::endl;
+  std::cout << "hash:     " << hash(idx) << std::endl;
+  std::cout << "Expected: " << "469" << std::endl;
+  std::cout << "hash value: " << values[hash(idx)] << std::endl;
+  std::cout << "Expected:   " << "2369" << std::endl;
+
+  hand = {
+    card_from_rank_suit(10, HEARTS),
+    card_from_rank_suit(9, SPADES),
+    card_from_rank_suit(8, CLUBS),
+    card_from_rank_suit(7, HEARTS),
+    card_from_rank_suit(6, SPADES),
+  };
+
+  std::cout << to_string(hand) << ": " << eval5(hash, hand) << std::endl;
+
+  hand = {
+    card_from_rank_suit(2, HEARTS),
+    card_from_rank_suit(2, SPADES),
+    card_from_rank_suit(2, CLUBS),
+    card_from_rank_suit(2, DIAMONDS),
+    card_from_rank_suit(3, SPADES),
+  };
+
+  std::cout << to_string(hand) << ": " << eval5(hash, hand) << std::endl;
+
+  std::cout << "hash(984): " << hash(984) << std::endl;
+  std::cout << "Expected:  " << 67 << std::endl;
+
+  std::cout << "hash(2079): " << hash(2079) << std::endl;
+  std::cout << "Expected:   " << 136 << std::endl;
+
+  std::cout << "hash(2310): " << hash(2310) << std::endl;
+  std::cout << "Expected:   " << 147 << std::endl;
+
+  std::cout << "hash(2450): " << hash(2450) << std::endl;
+  std::cout << "Expected:   " << 155 << std::endl;
+
+  std::cout << "hash(2604): " << hash(2604) << std::endl;
+  std::cout << "Expected:   " << 167 << std::endl;
+
+  std::cout << "hash(3256): " << hash(3256) << std::endl;
+  std::cout << "Expected:   " << 197 << std::endl;
+
+  std::cout << "hash(9207): " << hash(9207) << std::endl;
+  std::cout << "Expected:   " << 437 << std::endl;
+
+  std::cout << "hash(6006): " << hash(6006) << std::endl;
+  std::cout << "Expected:   " << 321 << std::endl;
+
+  return 0;
+}
