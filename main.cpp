@@ -67,17 +67,6 @@ void print_bits(uint32_t value) {
   std::cout << " (0x" << std::hex << value << std::dec << ")" << std::endl;
 }
 
-std::array<uint32_t, 52> initialize_deck() {
-  std::array<uint32_t, 52> cards{};
-  size_t index = 0;
-  for (auto suit : {SPADES, HEARTS, DIAMONDS, CLUBS}) {
-    for (int rank = 2; rank <= 14; ++rank) {
-      cards[index++] = card_from_rank_suit(rank, suit);
-    }
-  }
-  return cards;
-}
-
 auto main() -> int {
   auto deck = initialize_deck();
   std::random_device rd;

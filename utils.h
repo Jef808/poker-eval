@@ -1,8 +1,12 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include "types.h"
+
 #include <array>
+#include <cassert>
 #include <string>
+#include <vector>
 
 inline std::string to_string(uint32_t card) {
   static const char* rank_strs[] = {
@@ -16,10 +20,11 @@ inline std::string to_string(uint32_t card) {
   return std::string(rank_strs[rank]) + suit_strs[suit];
 }
 
-inline std::string to_string(const std::array<uint32_t, 5>& hand) {
+template<size_t N>
+inline std::string to_string(const std::array<uint32_t, N>& hand) {
   auto hand_cpy = hand;
   std::sort(hand_cpy.begin(), hand_cpy.end(), [](uint32_t a, uint32_t b){
-    return ((a >> 8) & 0x0f) > ((b >> 8) & 0x0f);
+    return ((a >> 8) & 0xf) > ((b >> 8) & 0xf);
   });
 
   std::string result;
@@ -94,6 +99,17 @@ inline std::array<uint32_t, 5> hand_from_string(const std::string& hand_s) {
   }
 
   return hand;
+}
+
+std::array<uint32_t, 52> initialize_deck() {
+  std::array<uint32_t, 52> cards{};
+  size_t index = 0;
+  for (auto suit : {SPADES, HEARTS, DIAMONDS, CLUBS}) {
+    for (int rank = 2; rank <= 14; ++rank) {
+      cards[index++] = card_from_rank_suit(rank, suit);
+    }
+  }
+  return cards;
 }
 
 #endif // UTILS_H_
