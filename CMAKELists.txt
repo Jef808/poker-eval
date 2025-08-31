@@ -13,12 +13,36 @@ add_executable(main tables.h bitset_rankindex.h bitset_rankindex.cpp main.cpp)
 
 Include(FetchContent)
 
+########
+# SFML #
+########
+FetchContent_Declare(
+  SFML
+  GIT_REPOSITORY https://github.com/SFML/SFML.git
+  GIT_TAG 3.0.1
+  GIT_SHALLOW ON
+  EXCLUDE_FROM_ALL
+  SYSTEM
+)
+FetchContent_MakeAvailable(SFML)
+
+add_executable(gui gui.cpp)
+target_link_libraries(gui PRIVATE SFML::Graphics)
+
+# add_custom_command(TARGET gui POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy_directory
+#     ${CMAKE_SOURCE_DIR}/resources
+#     $<TARGET_FILE_DIR:gui>/resources
+# )
+
+#########
+# tests #
+#########
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
   GIT_TAG        v3.10.0
 )
-
 FetchContent_MakeAvailable(Catch2)
 
 add_executable(tests bitset_rankindex.cpp test.cpp)
