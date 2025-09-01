@@ -7,7 +7,7 @@
 
 #include "types.h"
 #include "utils.h"
-#include "poker.h"
+#include "eval.h"
 #include "bitset_rankindex.h"
 
 TEST_CASE("card_from_rank_suit + to_string produces expected short notation", "[cards][to_string]") {
@@ -33,7 +33,7 @@ TEST_CASE("card_from_rank_suit + to_string produces expected short notation", "[
   REQUIRE(to_string(card_from_rank_suit(2,  HEARTS)) == "2h");
 }
 
-TEST_CASE("evaluate produces same values as hand_values.txt source", "[evaluate]") {
+TEST_CASE("eval5 produces same values as hand_values.txt source", "[evaluate]") {
   auto hash = BitsetRankIndex(115856201, KEYS);
 
   REQUIRE(eval5(hash, hand_from_string("Ah Kh Qh Jh Th")) == 1);
@@ -7498,4 +7498,29 @@ TEST_CASE("evaluate produces same values as hand_values.txt source", "[evaluate]
   REQUIRE(eval5(hash, hand_from_string("7c 6d 5s 3h 2c")) == 7460);
   REQUIRE(eval5(hash, hand_from_string("7c 6d 4s 3h 2c")) == 7461);
   REQUIRE(eval5(hash, hand_from_string("7c 5d 4s 3h 2c")) == 7462);
+}
+
+TEST_CASE("eval7 works as intended", "[evaluate]") {
+  auto hash = BitsetRankIndex(MAX_HASH_KEY, KEYS);
+
+  std::array<uint32_t, 7> hand7 {
+    card_from_rank_suit(14, SPADES),
+    card_from_rank_suit(14, HEARTS),
+    card_from_rank_suit(7, HEARTS),
+    card_from_rank_suit(7, CLUBS),
+    card_from_rank_suit(2, DIAMONDS),
+    card_from_rank_suit(2, HEARTS),
+    card_from_rank_suit(13, CLUBS)
+  };
+
+  std::array<uint32_t, 5> hand5 {
+    card_from_rank_suit(14, SPADES),
+    card_from_rank_suit(14, HEARTS),
+    card_from_rank_suit(7, HEARTS),
+    card_from_rank_suit(7, CLUBS),
+    card_from_rank_suit(13, CLUBS)
+  };
+
+  REQUIRE(eval5(hash, hand5) == 2534);
+  REQUIRE(eval7(hash, hand7) == 2534);
 }

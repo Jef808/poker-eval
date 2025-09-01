@@ -8,7 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(main tables.h bitset_rankindex.h bitset_rankindex.cpp main.cpp)
+add_executable(main bitset_rankindex.cpp montecarlo.cpp main.cpp)
 
 
 Include(FetchContent)
@@ -28,12 +28,6 @@ FetchContent_MakeAvailable(SFML)
 
 add_executable(gui gui.cpp)
 target_link_libraries(gui PRIVATE SFML::Graphics)
-
-# add_custom_command(TARGET gui POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E copy_directory
-#     ${CMAKE_SOURCE_DIR}/resources
-#     $<TARGET_FILE_DIR:gui>/resources
-# )
 
 #########
 # tests #

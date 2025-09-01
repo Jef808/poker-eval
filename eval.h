@@ -1,5 +1,5 @@
-#ifndef POKER_H_
-#define POKER_H_
+#ifndef EVAL_H_
+#define EVAL_H_
 
 #include <array>
 #include <algorithm>
@@ -48,25 +48,6 @@ uint16_t eval5(const HashFunc& hash, const std::array<uint32_t, 5>& hand) {
 }
 
 template <typename HashFunc>
-uint16_t eval5(const HashFunc& hash, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5) {
-  int q = (c1 | c2 | c3 | c4 | c5) >> 16;
-
-  // Check for flushes and straight flushes
-  if (c1 & c2 & c3 & c4 & c5 & 0xf000) {
-    return flush_table[q];
-  }
-
-  // Check for Straights and High card hands.
-  if (uint16_t s = unique5[q]; s) {
-    return s;
-  }
-
-  // Perfect hash lookup for remaining hands
-  q = (c1 & 0xff) * (c2 & 0xff) * (c3 & 0xff) * (c4 & 0xff) * (c5 & 0xff);
-  return VALUES[hash(q)];
-}
-
-template <typename HashFunc>
 uint16_t eval7(const HashFunc& hash, const std::array<uint32_t, 7>& hand) {
   std::array<std::array<int, 5>, 21> combs {
     std::array<int, 5>{0, 1, 2, 3, 4},
@@ -106,4 +87,4 @@ uint16_t eval7(const HashFunc& hash, const std::array<uint32_t, 7>& hand) {
   return best;
 }
 
-#endif // POKER_H_
+#endif // EVAL_H_

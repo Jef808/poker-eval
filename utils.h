@@ -101,7 +101,7 @@ inline std::array<uint32_t, 5> hand_from_string(const std::string& hand_s) {
   return hand;
 }
 
-std::array<uint32_t, 52> initialize_deck() {
+inline std::array<uint32_t, 52> initialize_deck() {
   std::array<uint32_t, 52> cards{};
   size_t index = 0;
   for (auto suit : {SPADES, HEARTS, DIAMONDS, CLUBS}) {
