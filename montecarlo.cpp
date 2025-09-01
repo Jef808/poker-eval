@@ -37,6 +37,22 @@ void MonteCarlo::simulate_flop(uint16_t* results) {
   }
 }
 
+void MonteCarlo::simulate_turn(uint16_t* results) {
+  for (size_t i = 0; i < m_deck_nodup.size(); ++i) {
+    uint32_t river = m_deck_nodup[i];
+
+    // Add river to each hand
+    for (auto& hand : m_hands) {
+      hand[6] = river;
+    }
+
+    // Evaluate each hand
+    for (const auto& hand : m_hands) {
+      *results++ = eval7(hash, hand);
+    }
+  }
+}
+
 void MonteCarlo::simulate(uint16_t* results, size_t num_simulations) {
   assert(!m_hands.empty());
 
@@ -57,6 +73,8 @@ void MonteCarlo::simulate(uint16_t* results, size_t num_simulations) {
 
   if (m_board.size() == 3) {
     return simulate_flop(results);
+  } else if (m_board.size() == 4) {
+    return simulate_turn(results);
   }
 
   for (size_t i = 0; i < num_simulations; ++i) {

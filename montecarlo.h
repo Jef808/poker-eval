@@ -49,6 +49,7 @@ private:
   std::vector<uint32_t> m_deck_nodup;
 
   void simulate_flop(uint16_t* results);
+  void simulate_turn(uint16_t* results);
 };
 
 #endif // MONTECARLO_H_

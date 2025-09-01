@@ -141,10 +141,11 @@ auto main() -> int {
     card_from_rank_suit(9, DIAMONDS),
   };
 
-  std::array<uint32_t, 3> board = {
+  std::array<uint32_t, 4> board = {
     card_from_rank_suit(6, DIAMONDS),
     card_from_rank_suit(7, CLUBS),
     card_from_rank_suit(2, HEARTS),
+    card_from_rank_suit(2, CLUBS), // turn
   };
 
   // Run Monte Carlo simulation
