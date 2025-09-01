@@ -4,6 +4,8 @@
 #include <array>
 #include <vector>
 #include <cstdint>
+#include <iterator>
+#include <cassert>
 
 class MonteCarlo {
 public:
@@ -34,6 +36,10 @@ public:
     for (auto it = begin; it != end; ++it) {
       m_board.push_back(*it);
     }
+  }
+
+  void set_board() {
+    m_board.clear();
   }
 
 private:

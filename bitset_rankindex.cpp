@@ -11,7 +11,7 @@ BitsetRankIndex::BitsetRankIndex(uint32_t max_value, const std::vector<uint32_t>
     bits_[w] |= (uint64_t(1) << b);
   }
 
-  // Build prefix popcounts (store number of bits on in 0..i-1)
+  // Build prefix popcounts (store number of bits turned on in 0..i-1)
   prefix_.resize(words);
   uint32_t running = 0;
   for (size_t i = 0; i < words; ++i) {

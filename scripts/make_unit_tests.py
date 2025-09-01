@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-#!/usr/bin/env python3
-
 import re
 
 with open("hand_values.txt") as f:
@@ -47,7 +45,7 @@ with (
 
 #include "types.h"
 #include "utils.h"
-#include "poker.h"
+#include "eval.h"
 #include "bitset_rankindex.h"
 
 TEST_CASE("card_from_rank_suit + to_string produces expected short notation", "[cards][to_string]") {
