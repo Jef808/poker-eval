@@ -135,16 +135,16 @@ auto main() -> int {
   std::cout << "7Cards: Average time per hand: " << static_cast<double>(duration) / 1000000.0 << " ms" << std::endl;
 
   std::vector<uint32_t> hands = {
-    card_from_rank_suit(14, SPADES),
-    card_from_rank_suit(13, SPADES),
-    card_from_rank_suit(10, HEARTS),
-    card_from_rank_suit(11, SPADES),
+    card_from_rank_suit(14, HEARTS),
+    card_from_rank_suit(14, DIAMONDS),
+    card_from_rank_suit(8, DIAMONDS),
+    card_from_rank_suit(9, DIAMONDS),
   };
 
   std::array<uint32_t, 3> board = {
-    card_from_rank_suit(2, SPADES),
-    card_from_rank_suit(7, SPADES),
-    card_from_rank_suit(9, HEARTS),
+    card_from_rank_suit(6, DIAMONDS),
+    card_from_rank_suit(7, CLUBS),
+    card_from_rank_suit(2, HEARTS),
   };
 
   // Run Monte Carlo simulation
@@ -153,49 +153,34 @@ auto main() -> int {
   std::cout << "Player 2: " << to_string(std::array<uint32_t,2>{hands[2], hands[3]}) << std::endl;
   std::cout << "Board: " << to_string(board) << "\n" << std::endl;
 
-  const size_t num_simulations = 1000000;
-  std::vector<uint16_t> results(num_simulations * 2);
+  const size_t num_simulations = 100000;
+  std::vector<uint16_t> results(num_simulations * 2, 0);
 
   auto montecarlo = MonteCarlo();
   montecarlo.set_hands(hands.begin(), hands.end());
   montecarlo.set_board(board.begin(), board.end());
+  // montecarlo.set_board();
 
-  auto mc_hands = montecarlo.hands();
-  std::cout << "Hands set: " <<
-    to_string(mc_hands[0][0]) << " " <<
-    to_string(mc_hands[0][1]) << " " <<
-    to_string(mc_hands[1][0]) << " " <<
-    to_string(mc_hands[1][1]) << std::endl;
-
-  auto mc_board = montecarlo.board();
-  std::cout << "Board set: " <<
-    to_string(mc_board[0]) << " " <<
-    to_string(mc_board[1]) << " " <<
-    to_string(mc_board[2]) << std::endl;
+  start = std::chrono::high_resolution_clock::now();
 
   montecarlo.simulate(results.data(), num_simulations);
 
-  std::cout << "\nResults sample:" << std::endl;
-  for (size_t i = 0; i < 10; ++i) {
-    auto res1 = results[i * 2 + 0];
-    auto res2 = results[i * 2 + 1];
-    std::cout << "Simulation " << i + 1 << ": Player 1: " << res1 << ", Player 2: " << res2;
-    if (res1 < res2) {
-      std::cout << " => Player 1 wins";
-    } else if (res2 < res1) {
-      std::cout << " => Player 2 wins";
-    } else {
-      std::cout << " => Tie";
-    }
-    std::cout << std::endl;
-  }
+  end = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+  std::cout << "Simulation took " << duration << " ms" << std::endl;
 
   int num_wins1 = 0;
   int num_wins2 = 0;
+  int num_results = 0;
 
   for (size_t i = 0; i < num_simulations; ++i) {
     auto res1 = results[i * 2 + 0];
     auto res2 = results[i * 2 + 1];
+    if (res1 == 0 || res2 == 0) {
+      break;
+    }
+    ++num_results;
     if (res1 < res2) {
       ++num_wins1;
     } else if (res2 < res1) {
@@ -203,11 +188,10 @@ auto main() -> int {
     }
   }
 
-  float prob1 = static_cast<float>(num_wins1) / static_cast<float>(num_simulations);
-  float prob2 = static_cast<float>(num_wins2) / static_cast<float>(num_simulations);
+  float prob1 = static_cast<float>(num_wins1) / static_cast<float>(num_results);
+  float prob2 = static_cast<float>(num_wins2) / static_cast<float>(num_results);
   float prob_tie = 1.0f - prob1 - prob2;
 
-  std::cout << "After " << num_simulations << " simulations:" << std::endl;
   std::cout << "Player 1 win %: " << prob1 * 100.0f << "%" << std::endl;
   std::cout << "Player 2 win %: " << prob2 * 100.0f << "%" << std::endl;
   std::cout << "Ties: " << prob_tie * 100.0f << "%" << std::endl;

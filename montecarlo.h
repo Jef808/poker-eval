@@ -46,6 +46,9 @@ private:
   std::array<uint32_t, 52> m_deck;
   std::vector<std::array<uint32_t, 7>> m_hands;
   std::vector<uint32_t> m_board;
+  std::vector<uint32_t> m_deck_nodup;
+
+  void simulate_flop(uint16_t* results);
 };
 
 #endif // MONTECARLO_H_
