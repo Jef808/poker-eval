@@ -108,8 +108,8 @@ class CardSelector {
       }
     }
 
-    std::optional<Card> getClickedCard(const sf::Vector2f& mousePos) const {
-      sf::Vector2f relativePos = mousePos - position_;
+    std::optional<Card> getClickedCard(const sf::Vector2i& mousePos) const {
+      sf::Vector2f relativePos = static_cast<sf::Vector2f>(mousePos) - position_;
 
       if (relativePos.x < 0 || relativePos.y < 0 || relativePos.x >= cardSize_.x * 13.f || relativePos.y >= cardSize_.y * 4.f) {
         return std::nullopt;
@@ -207,8 +207,7 @@ int main() {
           window.close();
         }
       } else if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-        sf::Vector2f mousePos = static_cast<sf::Vector2f>(sf::Mouse::getPosition(window));
-        debugCard = cardSelector.getClickedCard(mousePos);
+        debugCard = cardSelector.getClickedCard(sf::Mouse::getPosition(window));
       }
     }
 
