@@ -1,22 +1,10 @@
 #include <SFML/Graphics.hpp>
 
-const sf::Vector2f cardSize = {120.f, 180.f};
-
-void drawCard(sf::RenderTarget& rt, const sf::Vector2f& position, int rank, char suit) {
-  sf::RectangleShape cardRect(cardSize);
+void drawCard(int rank, char suit, sf::RenderTarget& rt, const sf::Vector2f& position, const sf::Vector2f& size) {
+  sf::RectangleShape cardRect(size);
   cardRect.setPosition(position);
-  cardRect.setOrigin(cardSize / 2.f);
   cardRect.setFillColor(sf::Color::White);
   rt.draw(cardRect);
-
-  // Draw card border
-  sf::RectangleShape border(cardSize);
-  border.setPosition(position);
-  border.setOrigin(cardSize / 2.f);
-  border.setFillColor(sf::Color::Transparent);
-  border.setOutlineThickness(5.f);
-  border.setOutlineColor(sf::Color::Black);
-  rt.draw(border);
 
   sf::Font font("resources/DejaVuSans.ttf");
 
@@ -39,8 +27,15 @@ void drawCard(sf::RenderTarget& rt, const sf::Vector2f& position, int rank, char
       rankText.setString(std::to_string(rank));
       break;
   }
-  rankText.setCharacterSize(40);
-  rankText.setPosition({position.x - cardSize.x / 2.f + 10.f, position.y - cardSize.y / 2.f + 10.f});
+
+  const float characterSize = size.y / 3.f;
+
+  rankText.setCharacterSize(characterSize);
+  // rankText.setPosition({position.x + (rank == 11 ? 24.f : 12.f), position.y + 4.f});
+
+  const float rankTextWidth = rankText.getLocalBounds().size.x;
+  const float rankCenterX = position.x + (size.x / 2.f) - (rankTextWidth / 2.f);
+  rankText.setPosition({rankCenterX, position.y + 4.f});
 
   sf::Text suitText(font);
   switch (suit) {
@@ -65,22 +60,42 @@ void drawCard(sf::RenderTarget& rt, const sf::Vector2f& position, int rank, char
       rankText.setFillColor(sf::Color::Black);
       break;
   }
-  suitText.setCharacterSize(40);
+  suitText.setCharacterSize(characterSize * 1.2f);
 
-  const float rankTextWidth = rankText.getLocalBounds().size.x;
-  const float offset = rankTextWidth / 4.f;
-  suitText.setPosition({position.x - cardSize.x / 2.f + (rank == 10 ? 17.f : 6.f), position.y - cardSize.y / 2.f + 50.f});
+  const float suitTextWidth = suitText.getLocalBounds().size.x;
+  const float suitCenterX = position.x + (size.x / 2.f) - (suitTextWidth / 2.f);
+  const float suitTextHeight = suitText.getLocalBounds().size.y;
+
+  suitText.setPosition({suitCenterX, position.y + size.y / 2.f});
+
   rt.draw(rankText);
   rt.draw(suitText);
 }
 
+void drawCardSelector(const sf::Vector2f& position, sf::RenderTarget& rt) {
+  const sf::Vector2f cardSize = {60.f, 90.f};
+  sf::RectangleShape selectorRect({cardSize.x * 13.f, cardSize.y * 4.f});
+  selectorRect.setOrigin({0.f, 0.f});
+  selectorRect.setPosition(position);
+  selectorRect.setFillColor(sf::Color::Black);
+  rt.draw(selectorRect);
+
+  for (auto suit : {'h', 'd', 'c', 's'}) {
+    for (int rank = 2; rank <= 14; ++rank) {
+      const sf::Vector2f cardPosition = {
+          position.x + (rank - 2) * cardSize.x,
+          position.y + (suit == 'h' ? 0.f : suit == 'd' ? cardSize.y : suit == 'c' ? 2 * cardSize.y : 3 * cardSize.y)
+      };
+      drawCard(rank, suit, rt, cardPosition, cardSize - sf::Vector2f{1.f, 1.f});
+    }
+  }
+}
+
 int main() {
-  const sf::Vector2u windowSize = {1920u, 1080u};
+  const sf::Vector2u initialWindowSize = {960u, 1080u};
 
-  auto window = sf::RenderWindow(sf::VideoMode(windowSize), "Holdem Evaluator");
+  auto window = sf::RenderWindow(sf::VideoMode(initialWindowSize), "Holdem Evaluator");
   window.setFramerateLimit(60);
-
-  const sf::Vector2f CENTER = {windowSize.x / 2.f, windowSize.y / 2.f};
 
   while (window.isOpen()) {
     while (const std::optional event = window.pollEvent()) {
@@ -93,10 +108,15 @@ int main() {
       }
     }
 
-    window.clear(sf::Color(40, 40, 40)); // Dark green background
+    const sf::Vector2f windowSize = sf::Vector2f(window.getSize());
+    const sf::Vector2f CENTER = windowSize / 2.f;
 
-    sf::RectangleShape cardRect(cardSize);
-    drawCard(window, CENTER, 14, 'd');
+    window.clear(sf::Color(100, 40, 40)); // Dark red background
+
+    const sf::Vector2f cardSize = {120.f, 180.f};
+    // drawCard(14, 'd', window, CENTER, cardSize);
+
+    drawCardSelector({20.f, 500.f}, window);
 
     window.display();
   }
