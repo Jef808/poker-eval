@@ -132,12 +132,20 @@ class CardSelector {
         default: return std::nullopt;
       }
 
+      if (std::find(selectedCards_.begin(), selectedCards_.end(), (rank - 2) + (suit == 'h' ? 0 : suit == 'd' ? 13 : suit == 'c' ? 26 : 39)) != selectedCards_.end()) {
+        return std::nullopt; // Card already selected
+      }
+
       return Card{rank, suit};
     }
 
     void selectCard(const Card& card) {
       int index = (card.rank - 2) + (card.suit == 'h' ? 0 : card.suit == 'd' ? 13 : card.suit == 'c' ? 26 : 39);
       selectedCards_.push_back(index);
+    }
+
+    void reset() {
+      selectedCards_.clear();
     }
 
   private:
@@ -175,10 +183,58 @@ class Hand {
       cards_[index] = card;
     }
 
+    const std::optional<Card>& getCards() const {
+      return cards_[0];
+    }
+
+    void reset() {
+      cards_[0].reset();
+      cards_[1].reset();
+    }
+
   private:
     sf::Vector2f position_;
     sf::Vector2f cardSize_;
     std::optional<Card> cards_[2];
+};
+
+
+class ResetButton {
+  public:
+    ResetButton(const sf::Vector2f& position, const sf::Vector2f& size)
+      : position_(position), size_(size) {}
+
+    void draw(sf::RenderTarget& rt) const {
+      sf::RectangleShape button(size_);
+      button.setPosition(position_);
+      button.setFillColor(sf::Color(200, 0, 0)); // Red button
+      rt.draw(button);
+
+      sf::Font font("resources/DejaVuSans.ttf");
+      sf::Text buttonText(font);
+      buttonText.setString("Clear");
+      buttonText.setCharacterSize(static_cast<unsigned int>(size_.y * 0.6f));
+      buttonText.setFillColor(sf::Color::White);
+
+      const float textWidth = buttonText.getLocalBounds().size.x;
+      const float textHeight = buttonText.getLocalBounds().size.y;
+
+      buttonText.setPosition({
+        position_.x + (size_.x - textWidth) / 2.f,
+        position_.y + (size_.y - textHeight) / 2.f - 5.f
+      });
+
+      rt.draw(buttonText);
+    }
+
+    bool isClicked(const sf::Vector2i& mousePos) const {
+      return mousePos.x >= position_.x && mousePos.x <= position_.x + size_.x &&
+             mousePos.y >= position_.y && mousePos.y <= position_.y + size_.y;
+    }
+
+  private:
+    sf::Vector2f position_;
+    sf::Vector2f size_;
 };
 
 int main() {
@@ -194,6 +250,8 @@ int main() {
   auto hand1 = Hand({20.f, 20.f}, {120.f, 180.f});
   auto hand2 = Hand({320.f, 20.f}, {120.f, 180.f});
 
+  auto resetButton = ResetButton({handSelectorPosition.x + 13.f * 60.f + 20.f, handSelectorPosition.y}, {100.f, 50.f});
+
   int nextInput = 0;
 
   std::optional<Card> debugCard;
@@ -208,6 +266,15 @@ int main() {
         }
       } else if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
         debugCard = cardSelector.getClickedCard(sf::Mouse::getPosition(window));
+        if (!debugCard.has_value()) {
+          if (resetButton.isClicked(sf::Mouse::getPosition(window))) {
+            hand1.reset();
+            hand2.reset();
+            cardSelector.reset();
+            nextInput = 0;
+            debugCard.reset();
+          }
+        }
       }
     }
 
@@ -218,20 +285,26 @@ int main() {
 
     const sf::Vector2f cardSize = {120.f, 180.f};
 
+    if (debugCard.has_value() && nextInput <= 3) {
+      if (nextInput < 2) {
+        hand1.setCard(nextInput, *debugCard);
+        cardSelector.selectCard(*debugCard);
+        debugCard.reset();
+        ++nextInput;
+      } else {
+        hand2.setCard(nextInput - 2, *debugCard);
+        cardSelector.selectCard(*debugCard);
+        debugCard.reset();
+        ++nextInput;
+      }
+    }
+
     cardSelector.draw(window);
-
-    hand1.setCard(0, Card{14, 'h'});
-    hand2.setCard(0, Card{10, 's'});
-
-    cardSelector.selectCard(Card{14, 'h'});
-    cardSelector.selectCard(Card{10, 's'});
 
     hand1.draw(window);
     hand2.draw(window);
 
-    if (debugCard.has_value()) {
-      drawCard(debugCard->rank, debugCard->suit, window, CENTER - cardSize / 2.f, cardSize);
-    }
+    resetButton.draw(window);
 
     window.display();
   }
