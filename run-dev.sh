@@ -1,10 +1,13 @@
 #!/usr/bin/bash
 
-SOURCES="gui.cpp"
+SOURCES_DIR=(
+    "./include/app"
+    "./src"
+)
 
-BUILD_COMMAND="cmake --build build --target gui"
+BUILD_COMMAND="cmake --build build --target holdem_evaluator"
 
-EXECUTABLE_PATH="./build/gui"
+EXECUTABLE_PATH="./build/holdem_evaluator"
 
 APP_PID=0
 
@@ -42,8 +45,8 @@ trap kill_app EXIT
 initial_build_and_run
 
 # Main watch loop
-echo "--> Watching for changes in files: $SOURCES"
-fswatch -o "$SOURCES" | while read -r event; do
+echo "--> Watching for changes in directory: $SOURCES_DIR"
+fswatch -o -r "${SOURCES_DIR[@]}" | while read -r event; do
     echo "--> Change detected: $event"
     echo "--> Attempting to rebuild..."
 

@@ -8,9 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(main bitset_rankindex.cpp montecarlo.cpp main.cpp)
-
-
 Include(FetchContent)
 
 ########
@@ -26,8 +23,28 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(SFML)
 
-add_executable(gui gui.cpp)
-target_link_libraries(gui PRIVATE SFML::Graphics)
+########
+# MAIN #
+########
+add_executable(holdem_evaluator
+  src/main.cpp
+  src/draw_card.cpp
+  src/card_selector.cpp
+  src/hand.cpp
+  src/reset_button.cpp
+  montecarlo.cpp
+  bitset_rankindex.cpp
+)
+
+target_include_directories(holdem_evaluator PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(holdem_evaluator PRIVATE
+  SFML::Graphics
+  SFML::Window
+  SFML::System
+)
 
 #########
 # tests #
