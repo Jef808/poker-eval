@@ -30,7 +30,6 @@ add_executable(holdem_evaluator
   src/main.cpp
   src/draw_card.cpp
   src/card_selector.cpp
-  src/hand.cpp
   src/reset_button.cpp
   montecarlo.cpp
   bitset_rankindex.cpp
