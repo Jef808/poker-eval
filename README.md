@@ -80,6 +80,8 @@ Ties:           6.82%
 The GUI provides the same functionality as the CLI through an 
 intuitive interactive interface.
 
+[[/resources/gui.png]]
+
 ## Running Tests
 
 By default, tests are not built. To build and run tests, replace the build command above by

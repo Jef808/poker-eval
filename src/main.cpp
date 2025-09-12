@@ -178,9 +178,6 @@ int main() {
     const auto& mousePos = sf::Mouse::getPosition(window);
 
     auto debug_s = "(" + std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y) + ")";
-    debug_s += " | lastComputedInput: " + std::to_string(lastComputedInput);
-    debug_s += " | hand1.size() + hand2.size(): " + std::to_string(hand1.size() + hand2.size());
-    debug_s += " | 4 + board.size(): " + std::to_string(4 + board.size());
 
     debug_display.update(debug_s);
     debug_display.draw(window);
