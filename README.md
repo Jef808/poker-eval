@@ -80,7 +80,7 @@ Ties:           6.82%
 The GUI provides the same functionality as the CLI through an 
 intuitive interactive interface.
 
-[[/resources/gui.png]]
+![Screenshot](/resources/gui.png)
 
 ## Running Tests
 
