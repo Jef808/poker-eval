@@ -84,7 +84,7 @@ intuitive interactive interface.
 
 ## Implementation
 
-For the 5-card evaluation, we closely follow [Cactus Kev](http://suffe.cool/poker/evaluator.html)'s blog post. Instead of the binary search approach proposed at the end of his article, we use a very straightforward perfect hash technique to obtain a very efficient 5 card evaluator.
+For the 5-card evaluation, we closely follow [Cactus Kev](http://suffe.cool/poker/evaluator.html)'s blog post. Instead of the binary search approach proposed at the end of his article, we use a straightforward perfect hash technique to obtain a very efficient 5 card evaluator.
 
 ## Running Tests
 
