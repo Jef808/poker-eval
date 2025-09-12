@@ -101,8 +101,6 @@ int main(int argc, char* argv[]) {
                 board_str += to_string(board_cards[i]);
             }
             std::cout << "Board: " << board_str << std::endl;
-        } else {
-            std::cout << "Board: (empty)" << std::endl;
         }
         std::cout << std::endl;
 
@@ -117,10 +115,7 @@ int main(int argc, char* argv[]) {
             montecarlo.set_board(board_cards.begin(), board_cards.end());
         }
 
-        auto start = std::chrono::high_resolution_clock::now();
         size_t r_simulations = montecarlo.simulate(results.data(), num_simulations);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         // Calculate results
         int num_wins1 = 0;
@@ -145,7 +140,6 @@ int main(int argc, char* argv[]) {
         std::cout << "Player 1 win: " << std::setw(5) << prob1 * 100.0f << "%" << std::endl;
         std::cout << "Player 2 win: " << std::setw(5) << prob2 * 100.0f << "%" << std::endl;
         std::cout << "Ties:         " << std::setw(5) << prob_tie * 100.0f << "%" << std::endl;
-        std::cout << "\nSimulation took " << duration << " ms (" << num_simulations << " iterations)" << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
