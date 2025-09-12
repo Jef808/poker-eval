@@ -7,9 +7,9 @@
 #include <iterator>
 #include <cassert>
 
-class MonteCarlo {
+class Evaluator {
 public:
-  MonteCarlo();
+  Evaluator();
   /**
    * Simulate num_simulations poker hands and store results in results array.
    *

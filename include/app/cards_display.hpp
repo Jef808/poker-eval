@@ -76,6 +76,7 @@ size_t CardsDisplay<N>::size() const {
       return i;
     }
   }
+  return N;
 }
 
 template <size_t N>

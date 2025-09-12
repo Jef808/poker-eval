@@ -34,7 +34,7 @@ add_executable(holdem_evaluator
   src/card_selector.cpp
   src/reset_button.cpp
   src/utils.cpp
-  src/montecarlo.cpp
+  src/evaluation.cpp
   src/bitset_rankindex.cpp
 )
 
@@ -55,7 +55,7 @@ add_executable(cli
   src/cli.cpp
   src/utils.cpp
   src/bitset_rankindex.cpp
-  src/montecarlo.cpp
+  src/evaluation.cpp
 )
 
 target_include_directories(cli PRIVATE

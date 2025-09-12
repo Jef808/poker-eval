@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include "utils.h"
-#include "montecarlo.h"
+#include "evaluation.hpp"
 
 #include "app/card.hpp"
 #include "app/card_selector.hpp"
@@ -16,7 +16,7 @@
 
 
 int main() {
-  auto montecarlo = MonteCarlo();
+  auto evaluator = Evaluator();
   const size_t num_simulations = 100000;
   std::vector<uint16_t> results(num_simulations * 2, 0);
 
@@ -43,7 +43,7 @@ int main() {
   int nextInput = 0;
   std::optional<Card> selectedCard;
 
-  // --- MonteCarlo wiring state ---
+  // --- Evaluator wiring state ---
   std::vector<uint32_t> player_cards;
   std::vector<uint32_t> board_cards;
   int lastComputedInput = -1;
@@ -117,8 +117,8 @@ int main() {
         player_cards.push_back(to_engine_card(*hand2.getCard(0)));
         player_cards.push_back(to_engine_card(*hand2.getCard(1)));
 
-        montecarlo.set_hands(player_cards.begin(), player_cards.end());
-        montecarlo.set_board(); // Clear board first
+        evaluator.set_hands(player_cards.begin(), player_cards.end());
+        evaluator.set_board(); // Clear board first
 
         if (board_size >= 3) {
           // Flop is set
@@ -127,10 +127,10 @@ int main() {
                          std::back_inserter(board_cards),
                          [](const std::optional<Card>& c) { return to_engine_card(*c); }
                          );
-          montecarlo.set_board(board_cards.begin(), board_cards.end());
+          evaluator.set_board(board_cards.begin(), board_cards.end());
         }
 
-        size_t r_simulations = montecarlo.simulate(results.data(), num_simulations);
+        size_t r_simulations = evaluator.simulate(results.data(), num_simulations);
 
         int num_wins1 = 0;
         int num_wins2 = 0;

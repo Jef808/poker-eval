@@ -7,7 +7,7 @@
 
 #include "types.h"
 #include "utils.h"
-#include "montecarlo.h"
+#include "evaluation.hpp"
 
 void print_usage(const char* program_name) {
     std::cout << "Usage: " << program_name << " <hand1> <hand2> [board]\n\n";
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        // Combine hands into single vector for MonteCarlo
+        // Combine hands into single vector for Evaluator
         std::vector<uint32_t> hands;
         hands.insert(hands.end(), hand1_cards.begin(), hand1_cards.end());
         hands.insert(hands.end(), hand2_cards.begin(), hand2_cards.end());
@@ -108,14 +108,14 @@ int main(int argc, char* argv[]) {
         const size_t num_simulations = 100000;
         std::vector<uint16_t> results(num_simulations * 2, 0);
 
-        auto montecarlo = MonteCarlo();
-        montecarlo.set_hands(hands.begin(), hands.end());
+        auto evaluator = Evaluator();
+        evaluator.set_hands(hands.begin(), hands.end());
 
         if (!board_cards.empty()) {
-            montecarlo.set_board(board_cards.begin(), board_cards.end());
+            evaluator.set_board(board_cards.begin(), board_cards.end());
         }
 
-        size_t r_simulations = montecarlo.simulate(results.data(), num_simulations);
+        size_t r_simulations = evaluator.simulate(results.data(), num_simulations);
 
         // Calculate results
         int num_wins1 = 0;

@@ -1,4 +1,4 @@
-#include "montecarlo.h"
+#include "evaluation.hpp"
 #include "types.h"
 #include "utils.h"
 #include "bitset_rankindex.h"
@@ -13,12 +13,12 @@ static std::random_device rd;
 static std::mt19937 g(rd());
 static BitsetRankIndex hash{MAX_HASH_KEY, KEYS};
 
-MonteCarlo::MonteCarlo()
+Evaluator::Evaluator()
   : m_deck{initialize_deck()} {
   m_deck_nodup.reserve(52);
 }
 
-void MonteCarlo::simulate_flop(uint16_t* results) {
+void Evaluator::simulate_flop(uint16_t* results) {
   // Loop over all combos of turn and river
   for (const auto& c : c45_2) {
     uint32_t turn = m_deck_nodup[c[0]];
@@ -37,7 +37,7 @@ void MonteCarlo::simulate_flop(uint16_t* results) {
   }
 }
 
-void MonteCarlo::simulate_turn(uint16_t* results) {
+void Evaluator::simulate_turn(uint16_t* results) {
   for (size_t i = 0; i < m_deck_nodup.size(); ++i) {
     uint32_t river = m_deck_nodup[i];
 
@@ -53,7 +53,7 @@ void MonteCarlo::simulate_turn(uint16_t* results) {
   }
 }
 
-size_t MonteCarlo::simulate(uint16_t* results, size_t num_simulations) {
+size_t Evaluator::simulate(uint16_t* results, size_t num_simulations) {
   assert(!m_hands.empty());
 
   // Copy board cards to each hand
