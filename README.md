@@ -82,6 +82,10 @@ intuitive interactive interface.
 
 ![Screenshot](/resources/gui.png)
 
+## Implementation
+
+For the 5-card evaluation, we closely follow [Cactus Kev](http://suffe.cool/poker/evaluator.html)'s blog post. Instead of the binary search approach proposed at the end of his article, we use a very straightforward perfect hash technique to obtain a very efficient 5 card evaluator.
+
 ## Running Tests
 
 By default, tests are not built. To build and run tests, replace the build command above by
