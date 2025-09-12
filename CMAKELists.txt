@@ -33,13 +33,12 @@ add_executable(holdem_evaluator
   src/draw_card.cpp
   src/card_selector.cpp
   src/reset_button.cpp
-  utils.cpp
-  montecarlo.cpp
-  bitset_rankindex.cpp
+  src/utils.cpp
+  src/montecarlo.cpp
+  src/bitset_rankindex.cpp
 )
 
 target_include_directories(holdem_evaluator PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
@@ -54,13 +53,13 @@ target_link_libraries(holdem_evaluator PRIVATE
 ############
 add_executable(cli
   src/cli.cpp
-  utils.cpp
-  bitset_rankindex.cpp
-  montecarlo.cpp
+  src/utils.cpp
+  src/bitset_rankindex.cpp
+  src/montecarlo.cpp
 )
 
 target_include_directories(cli PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 #########
@@ -75,10 +74,15 @@ if(BUILD_TESTS)
   FetchContent_MakeAvailable(Catch2)
 
   add_executable(tests
-    test.cpp
-    utils.cpp
-    bitset_rankindex.cpp
+    tests/test.cpp
+    src/utils.cpp
+    src/bitset_rankindex.cpp
   )
+
+  target_include_directories(tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+  )
+
   target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 
   list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
