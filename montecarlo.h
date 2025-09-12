@@ -14,8 +14,9 @@ public:
    * Simulate num_simulations poker hands and store results in results array.
    *
    * The results array must be large enough to hold num_simulations * number_of_hands values.
+   * Return the actual number of simulations performed, so probabilities can be computed.
    */
-  void simulate(uint16_t* results, size_t num_simulations);
+  size_t simulate(uint16_t* results, size_t num_simulations);
 
   const auto& hands() const { return m_hands; }
   const auto& board() const { return m_board; }

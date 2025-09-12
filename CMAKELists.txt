@@ -23,19 +23,21 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(SFML)
 
-########
-# MAIN #
-########
+############
+# GUI MAIN #
+############
 add_executable(holdem_evaluator
   src/main.cpp
   src/draw_card.cpp
   src/card_selector.cpp
   src/reset_button.cpp
+  utils.cpp
   montecarlo.cpp
   bitset_rankindex.cpp
 )
 
 target_include_directories(holdem_evaluator PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
@@ -43,6 +45,20 @@ target_link_libraries(holdem_evaluator PRIVATE
   SFML::Graphics
   SFML::Window
   SFML::System
+)
+
+############
+# CLI MAIN #
+############
+add_executable(cli
+  src/cli.cpp
+  utils.cpp
+  bitset_rankindex.cpp
+  montecarlo.cpp
+)
+
+target_include_directories(cli PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 #########

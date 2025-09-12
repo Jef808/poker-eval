@@ -130,12 +130,12 @@ int main() {
           montecarlo.set_board(board_cards.begin(), board_cards.end());
         }
 
-        montecarlo.simulate(results.data(), num_simulations);
+        size_t r_simulations = montecarlo.simulate(results.data(), num_simulations);
 
         int num_wins1 = 0;
         int num_wins2 = 0;
 
-        for (size_t i = 0; i < num_simulations; ++i) {
+        for (size_t i = 0; i < r_simulations; ++i) {
           auto res1 = results[i * 2 + 0];
           auto res2 = results[i * 2 + 1];
           if (res1 < res2) {
@@ -145,8 +145,8 @@ int main() {
           }
         }
 
-        prob1 = static_cast<float>(num_wins1) / static_cast<float>(num_simulations);
-        prob2 = static_cast<float>(num_wins2) / static_cast<float>(num_simulations);
+        prob1 = static_cast<float>(num_wins1) / static_cast<float>(r_simulations);
+        prob2 = static_cast<float>(num_wins2) / static_cast<float>(r_simulations);
         probTie = 1.f - prob1 - prob2;
 
         lastComputedInput = 4 + board_size;

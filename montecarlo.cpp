@@ -53,7 +53,7 @@ void MonteCarlo::simulate_turn(uint16_t* results) {
   }
 }
 
-void MonteCarlo::simulate(uint16_t* results, size_t num_simulations) {
+size_t MonteCarlo::simulate(uint16_t* results, size_t num_simulations) {
   assert(!m_hands.empty());
 
   // Copy board cards to each hand
@@ -72,11 +72,22 @@ void MonteCarlo::simulate(uint16_t* results, size_t num_simulations) {
   });
 
   if (m_board.size() == 3) {
-    return simulate_flop(results);
+    // Board has flop, simulate 990 combos of turn and river
+    simulate_flop(results);
+    return 990;
   } else if (m_board.size() == 4) {
-    return simulate_turn(results);
+    // Board has flop and turn, simulate 44 possible rivers
+    simulate_turn(results);
+    return 44;
+  } else if (m_board.size() == 5) {
+    // Board is complete, evaluate each hand once
+    for (const auto& hand : m_hands) {
+      *results++ = eval7(hash, hand);
+    }
+    return 1;
   }
 
+  // When no board is set, use montecarlo sampling
   for (size_t i = 0; i < num_simulations; ++i) {
     // Shuffle the deck
     // TODO: Check if a simpler shuffle is significantly faster
@@ -99,4 +110,6 @@ void MonteCarlo::simulate(uint16_t* results, size_t num_simulations) {
       *results++ = eval7(hash, hand);
     }
   }
+
+  return num_simulations;
 }

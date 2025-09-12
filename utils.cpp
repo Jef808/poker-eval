@@ -1,50 +1,30 @@
-#ifndef UTILS_H_
-#define UTILS_H_
+#include "utils.h"
 
-#include "types.h"
-
-#include <array>
-#include <cassert>
-#include <string>
-#include <vector>
-
-inline std::string to_string(uint32_t card) {
-  static const char* rank_strs[] = {
+namespace {
+  const char* rank_strs[] = {
     "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"
   };
-  static const char* suit_strs[] = {"?", "s", "h", "?", "d", "?", "?", "?", "c"};
 
+  const char* suit_strs[] = {"?", "s", "h", "?", "d", "?", "?", "?", "c"};
+
+  const int prime_for_rank[15] = {
+    0, 0, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41
+  };
+}
+
+std::string to_string(uint32_t card) {
   int rank = (card >> 8) & 0xf;
   int suit = (card >> 12) & 0xf;
 
   return std::string(rank_strs[rank]) + suit_strs[suit];
 }
 
-template<size_t N>
-inline std::string to_string(const std::array<uint32_t, N>& hand) {
-  auto hand_cpy = hand;
-  std::sort(hand_cpy.begin(), hand_cpy.end(), [](uint32_t a, uint32_t b){
-    return ((a >> 8) & 0xf) > ((b >> 8) & 0xf);
-  });
-
-  std::string result;
-  for (size_t i = 0; i < hand_cpy.size(); ++i) {
-    if (i > 0) result += " ";
-    result += to_string(hand_cpy[i]);
-  }
-  return result;
-}
-
-static const int prime_for_rank[15] = {
-  0, 0, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41
-};
-
-inline uint32_t card_from_rank_suit(int rank, int suit) {
+uint32_t card_from_rank_suit(int rank, int suit) {
   return (prime_for_rank[rank] | ((rank - 2) << 8) | (1 << (16 + rank - 2)) |
           (suit << 12));
 }
 
-inline uint32_t card_from_string(char* card_s) {
+uint32_t card_from_string(char* card_s) {
   int rank;
   int suit;
 
@@ -76,7 +56,7 @@ inline uint32_t card_from_string(char* card_s) {
   return card_from_rank_suit(rank, suit);
 }
 
-inline std::array<uint32_t, 5> hand_from_string(const std::string& hand_s) {
+std::array<uint32_t, 5> hand_from_string(const std::string& hand_s) {
   std::array<uint32_t, 5> hand{};
   size_t pos = 0;
   size_t card_index = 0;
@@ -101,7 +81,7 @@ inline std::array<uint32_t, 5> hand_from_string(const std::string& hand_s) {
   return hand;
 }
 
-inline std::array<uint32_t, 52> initialize_deck() {
+std::array<uint32_t, 52> initialize_deck() {
   std::array<uint32_t, 52> cards{};
   size_t index = 0;
   for (auto suit : {SPADES, HEARTS, DIAMONDS, CLUBS}) {
@@ -111,5 +91,3 @@ inline std::array<uint32_t, 52> initialize_deck() {
   }
   return cards;
 }
-
-#endif // UTILS_H_

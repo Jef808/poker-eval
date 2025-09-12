@@ -82,6 +82,12 @@ auto main() -> int {
     card_from_rank_suit(9, DIAMONDS),
   };
 
+  std::array<uint32_t, 3> board = {
+    card_from_rank_suit(10, CLUBS),
+    card_from_rank_suit(11, CLUBS),
+    card_from_rank_suit(2, DIAMONDS),
+  };
+
   const size_t num_simulations = 100000;
   std::vector<uint16_t> results(num_simulations * 2, 0);
 
@@ -90,14 +96,14 @@ auto main() -> int {
   std::cout << "Player 1: " << to_string(std::array<uint32_t,2>{hands[0], hands[1]}) << std::endl;
   std::cout << "Player 2: " << to_string(std::array<uint32_t,2>{hands[2], hands[3]}) << std::endl;
 
-  // montecarlo.set_board(board.begin(), board.end());
-  // std::cout << "Board: " << to_string(board) << "\n" << std::endl;
-  montecarlo.set_board();
-  std::cout << "Board: (empty)\n" << std::endl;
+  montecarlo.set_board(board.begin(), board.end());
+  std::cout << "Board: " << to_string(board) << "\n" << std::endl;
+  // montecarlo.set_board();
+  // std::cout << "Board: (empty)\n" << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
 
-  montecarlo.simulate(results.data(), num_simulations);
+  size_t r_simulations = montecarlo.simulate(results.data(), num_simulations);
 
   end = std::chrono::high_resolution_clock::now();
   duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
@@ -105,7 +111,7 @@ auto main() -> int {
   int num_wins1 = 0;
   int num_wins2 = 0;
 
-  for (size_t i = 0; i < num_simulations; ++i) {
+  for (size_t i = 0; i < r_simulations; ++i) {
     auto res1 = results[i * 2 + 0];
     auto res2 = results[i * 2 + 1];
     if (res1 < res2) {
@@ -115,8 +121,8 @@ auto main() -> int {
     }
   }
 
-  float prob1 = static_cast<float>(num_wins1) / static_cast<float>(num_simulations);
-  float prob2 = static_cast<float>(num_wins2) / static_cast<float>(num_simulations);
+  float prob1 = static_cast<float>(num_wins1) / static_cast<float>(r_simulations);
+  float prob2 = static_cast<float>(num_wins2) / static_cast<float>(r_simulations);
   float prob_tie = 1.0f - prob1 - prob2;
 
   std::cout << std::fixed << std::setprecision(2);
