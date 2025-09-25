@@ -15,13 +15,41 @@
 #include "app/debug_display.hpp"
 
 
+struct ProbabilityResult {
+  float prob1;
+  float prob2;
+  float probTie;
+};
+
+
+ProbabilityResult compute_probabilities(std::vector<uint16_t>& results, size_t num_simulations) {
+  int num_wins1 = 0;
+  int num_wins2 = 0;
+
+  for (size_t i = 0; i < num_simulations; ++i) {
+    auto res1 = results[i * 2 + 0];
+    auto res2 = results[i * 2 + 1];
+    if (res1 < res2) {
+      ++num_wins1;
+    } else if (res2 < res1) {
+      ++num_wins2;
+    }
+  }
+
+  float prob1 = static_cast<float>(num_wins1) / static_cast<float>(num_simulations);
+  float prob2 = static_cast<float>(num_wins2) / static_cast<float>(num_simulations);
+  float probTie = 1.f - prob1 - prob2;
+
+  return ProbabilityResult{prob1, prob2, probTie};
+}
+
+
 int main() {
   auto evaluator = Evaluator();
   const size_t num_simulations = 100000;
   std::vector<uint16_t> results(num_simulations * 2, 0);
 
   const sf::Vector2u initialWindowSize = {960u, 1080u};
-  const sf::Vector2f initialWindowSizeF = static_cast<sf::Vector2f>(initialWindowSize);
 
   sf::Font font("resources/DejaVuSans.ttf");
   auto debug_display = DebugDisplay(font, 14);
@@ -43,7 +71,7 @@ int main() {
   int nextInput = 0;
   std::optional<Card> selectedCard;
 
-  // --- Evaluator wiring state ---
+  // --- Evaluator state ---
   std::vector<uint32_t> player_cards;
   std::vector<uint32_t> board_cards;
   int lastComputedInput = -1;
@@ -51,6 +79,8 @@ int main() {
   float prob1 = 0.f, prob2 = 0.f, probTie = 0.f;
 
   while (window.isOpen()) {
+    const auto& mousePos = sf::Mouse::getPosition(window);
+
     while (const std::optional event = window.pollEvent()) {
       if (event->is<sf::Event::Closed>()) {
         window.close();
@@ -60,10 +90,10 @@ int main() {
         }
       } else if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
         // If the card selector was clicked, store that card
-        selectedCard = cardSelector.getClickedCard(sf::Mouse::getPosition(window));
+        selectedCard = cardSelector.getClickedCard(mousePos);
         if (!selectedCard.has_value()) {
           // If the reset button was clicked, reset everything
-          if (resetButton.isClicked(sf::Mouse::getPosition(window))) {
+          if (resetButton.isClicked(mousePos)) {
             // reset state
             hand1.reset();
             hand2.reset();
@@ -123,31 +153,21 @@ int main() {
         if (board_size >= 3) {
           // Flop is set
           board_cards.clear();
-          std::transform(board.getCards().begin(), board.getCards().begin() + board_size,
-                         std::back_inserter(board_cards),
-                         [](const std::optional<Card>& c) { return to_engine_card(*c); }
-                         );
+          std::transform(
+            board.getCards().begin(),
+            board.getCards().begin() + board_size,
+            std::back_inserter(board_cards),
+            [](const std::optional<Card>& c) { return to_engine_card(*c); }
+          );
           evaluator.set_board(board_cards.begin(), board_cards.end());
         }
 
         size_t r_simulations = evaluator.simulate(results.data(), num_simulations);
 
-        int num_wins1 = 0;
-        int num_wins2 = 0;
-
-        for (size_t i = 0; i < r_simulations; ++i) {
-          auto res1 = results[i * 2 + 0];
-          auto res2 = results[i * 2 + 1];
-          if (res1 < res2) {
-            ++num_wins1;
-          } else if (res2 < res1) {
-            ++num_wins2;
-          }
-        }
-
-        prob1 = static_cast<float>(num_wins1) / static_cast<float>(r_simulations);
-        prob2 = static_cast<float>(num_wins2) / static_cast<float>(r_simulations);
-        probTie = 1.f - prob1 - prob2;
+        auto prob_result = compute_probabilities(results, r_simulations);
+        prob1 = prob_result.prob1;
+        prob2 = prob_result.prob2;
+        probTie = prob_result.probTie;
 
         lastComputedInput = 4 + board_size;
       }
@@ -175,8 +195,6 @@ int main() {
     }
 
     // Draw debug info
-    const auto& mousePos = sf::Mouse::getPosition(window);
-
     auto debug_s = "(" + std::to_string(mousePos.x) + ", " + std::to_string(mousePos.y) + ")";
 
     debug_display.update(debug_s);
