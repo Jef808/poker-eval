@@ -35,6 +35,7 @@ add_executable(holdem_evaluator
   src/reset_button.cpp
   src/utils.cpp
   src/evaluation.cpp
+  src/range_evaluation.cpp
   src/bitset_rankindex.cpp
 )
 

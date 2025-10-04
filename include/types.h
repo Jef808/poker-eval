@@ -12,4 +12,9 @@ enum Suit {
 
 constexpr uint32_t MAX_HASH_KEY = 115856201;
 
+struct EvalResult {
+  float win_prob;
+  float tie_prob;
+};
+
 #endif // TYPES_H_

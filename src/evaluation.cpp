@@ -114,7 +114,7 @@ size_t Evaluator::simulate(uint16_t* results, size_t num_simulations) {
   return num_simulations;
 }
 
-Evaluator::Result Evaluator::evaluate() {
+EvalResult Evaluator::evaluate() {
   m_results.assign(m_num_simulations * m_hands.size(), 0);
 
   size_t simulations_done = simulate(m_results.data(), m_num_simulations);
@@ -133,7 +133,7 @@ Evaluator::Result Evaluator::evaluate() {
     }
   }
 
-  Result result;
+  EvalResult result;
 
   result.win_prob = static_cast<float>(num_wins) / static_cast<float>(simulations_done);
   result.tie_prob = static_cast<float>(num_ties) / static_cast<float>(simulations_done);

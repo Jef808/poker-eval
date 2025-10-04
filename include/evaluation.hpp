@@ -1,6 +1,8 @@
 #ifndef EVALUATION_H_
 #define EVALUATION_H_
 
+#include "types.h"
+
 #include <array>
 #include <vector>
 #include <cstdint>
@@ -10,17 +12,12 @@
 
 class Evaluator {
 public:
-  struct Result {
-    float win_prob;
-    float tie_prob;
-  };
-
   Evaluator();
 
   /**
    * Return a `Result` sruct with win and tie probabilities for the first hand.
    */
-  Result evaluate();
+  EvalResult evaluate();
 
   /**
    * Simulate num_simulations poker hands and store results in results array.
