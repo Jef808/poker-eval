@@ -7,12 +7,25 @@
 #include <iterator>
 #include <cassert>
 
+
 class Evaluator {
 public:
+  struct Result {
+    float win_prob;
+    float tie_prob;
+  };
+
   Evaluator();
+
+  /**
+   * Return a `Result` sruct with win and tie probabilities for the first hand.
+   */
+  Result evaluate();
+
   /**
    * Simulate num_simulations poker hands and store results in results array.
    *
+   * The results stored are the hand ranks for each player's hand in each simulation.
    * The results array must be large enough to hold num_simulations * number_of_hands values.
    * Return the actual number of simulations performed, so probabilities can be computed.
    */
@@ -50,10 +63,14 @@ public:
   }
 
 private:
+  // Default number of simulations to run when evaluating preflop hands
+  size_t m_num_simulations{100000};
+
   std::array<uint32_t, 52> m_deck;
   std::vector<std::array<uint32_t, 7>> m_hands;
   std::vector<uint32_t> m_board;
   std::vector<uint32_t> m_deck_nodup;
+  std::vector<uint16_t> m_results;
 
   void simulate_flop(uint16_t* results);
   void simulate_turn(uint16_t* results);

@@ -7,14 +7,12 @@
 #include <string>
 #include <vector>
 
-// Function declarations
 std::string to_string(uint32_t card);
 uint32_t card_from_rank_suit(int rank, int suit);
 uint32_t card_from_string(char* card_s);
 std::array<uint32_t, 5> hand_from_string(const std::string& hand_s);
 std::array<uint32_t, 52> initialize_deck();
 
-// Template function must remain in header
 template<size_t N>
 inline std::string to_string(const std::array<uint32_t, N>& hand) {
   auto hand_cpy = hand;

@@ -15,39 +15,8 @@
 #include "app/debug_display.hpp"
 
 
-struct ProbabilityResult {
-  float prob1;
-  float prob2;
-  float probTie;
-};
-
-
-ProbabilityResult compute_probabilities(std::vector<uint16_t>& results, size_t num_simulations) {
-  int num_wins1 = 0;
-  int num_wins2 = 0;
-
-  for (size_t i = 0; i < num_simulations; ++i) {
-    auto res1 = results[i * 2 + 0];
-    auto res2 = results[i * 2 + 1];
-    if (res1 < res2) {
-      ++num_wins1;
-    } else if (res2 < res1) {
-      ++num_wins2;
-    }
-  }
-
-  float prob1 = static_cast<float>(num_wins1) / static_cast<float>(num_simulations);
-  float prob2 = static_cast<float>(num_wins2) / static_cast<float>(num_simulations);
-  float probTie = 1.f - prob1 - prob2;
-
-  return ProbabilityResult{prob1, prob2, probTie};
-}
-
-
 int main() {
   auto evaluator = Evaluator();
-  const size_t num_simulations = 100000;
-  std::vector<uint16_t> results(num_simulations * 2, 0);
 
   const sf::Vector2u initialWindowSize = {960u, 1080u};
 
@@ -140,7 +109,6 @@ int main() {
       }
 
       if (should_compute) {
-        results.clear();
         player_cards.clear();
         player_cards.push_back(to_engine_card(*hand1.getCard(0)));
         player_cards.push_back(to_engine_card(*hand1.getCard(1)));
@@ -162,12 +130,11 @@ int main() {
           evaluator.set_board(board_cards.begin(), board_cards.end());
         }
 
-        size_t r_simulations = evaluator.simulate(results.data(), num_simulations);
+        auto results = evaluator.evaluate();
 
-        auto prob_result = compute_probabilities(results, r_simulations);
-        prob1 = prob_result.prob1;
-        prob2 = prob_result.prob2;
-        probTie = prob_result.probTie;
+        prob1 = results.win_prob;
+        probTie = results.tie_prob;
+        prob2 = 1.0f - prob1 - probTie;
 
         lastComputedInput = 4 + board_size;
       }

@@ -104,10 +104,7 @@ int main(int argc, char* argv[]) {
         }
         std::cout << std::endl;
 
-        // Run simulation
-        const size_t num_simulations = 100000;
-        std::vector<uint16_t> results(num_simulations * 2, 0);
-
+        // Evaluate
         auto evaluator = Evaluator();
         evaluator.set_hands(hands.begin(), hands.end());
 
@@ -115,25 +112,10 @@ int main(int argc, char* argv[]) {
             evaluator.set_board(board_cards.begin(), board_cards.end());
         }
 
-        size_t r_simulations = evaluator.simulate(results.data(), num_simulations);
-
-        // Calculate results
-        int num_wins1 = 0;
-        int num_wins2 = 0;
-
-        for (size_t i = 0; i < r_simulations; ++i) {
-            auto res1 = results[i * 2 + 0];
-            auto res2 = results[i * 2 + 1];
-            if (res1 < res2) {
-                ++num_wins1;
-            } else if (res2 < res1) {
-                ++num_wins2;
-            }
-        }
-
-        float prob1 = static_cast<float>(num_wins1) / static_cast<float>(r_simulations);
-        float prob2 = static_cast<float>(num_wins2) / static_cast<float>(r_simulations);
-        float prob_tie = 1.0f - prob1 - prob2;
+        auto result = evaluator.evaluate();
+        float prob1 = result.win_prob;
+        float prob_tie = result.tie_prob;
+        float prob2 = 1.0f - prob1 - prob_tie;
 
         // Display results
         std::cout << std::fixed << std::setprecision(2);
