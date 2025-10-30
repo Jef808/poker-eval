@@ -33,10 +33,11 @@ void drawRangeHand(const RangeHand& hand,
                    sf::RenderTarget& rt,
                    const sf::Font& font,
                    const sf::Vector2f& position,
-                   const sf::Vector2f& size) {
+                   const sf::Vector2f& size,
+                   const sf::Color& backgroundColor) {
   sf::RectangleShape container{size};
   container.setPosition(position);
-  container.setFillColor(sf::Color(200, 200, 200)); // light gray
+  container.setFillColor(backgroundColor);
   rt.draw(container);
 
   sf::Text text(font);

@@ -5,9 +5,9 @@ SOURCES_DIR=(
     "./src"
 )
 
-BUILD_COMMAND="cmake --build build --target holdem_evaluator"
+BUILD_COMMAND="cmake --build build --target gui"
 
-EXECUTABLE_PATH="./build/holdem_evaluator"
+EXECUTABLE_PATH="./build/gui"
 
 APP_PID=0
 

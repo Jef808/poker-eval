@@ -13,6 +13,7 @@ void drawRangeHand(const RangeHand& hand,
                    sf::RenderTarget& rt,
                    const sf::Font& font,
                    const sf::Vector2f& position,
-                   const sf::Vector2f& size);
+                   const sf::Vector2f& size,
+                   const sf::Color& backgroundColor);
 
 #endif // DRAW_RANGE_HAND_H_
